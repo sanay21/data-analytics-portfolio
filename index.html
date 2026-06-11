@@ -1,0 +1,209 @@
+Here's the full code — copy everything:Here's the full code — select all and copy:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Student Outcomes Dashboard — Sanay Kumar</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a1a; min-height: 100vh; }
+  header { background: #fff; border-bottom: 1px solid #e5e5e2; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 17px; font-weight: 500; color: #1a1a1a; }
+  header p { font-size: 13px; color: #888; }
+  .badge { background: #e6f1fb; color: #185fa5; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+  .filter-row { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .filter-row label { font-size: 13px; color: #666; }
+  .filter-row select { font-size: 13px; padding: 6px 10px; border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.75rem; }
+  @media (max-width: 700px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } .charts-row { grid-template-columns: 1fr !important; } }
+  .kpi { background: #fff; border: 1px solid #e5e5e2; border-radius: 10px; padding: 1rem 1.25rem; }
+  .kpi-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+  .kpi-value { font-size: 26px; font-weight: 500; color: #1a1a1a; }
+  .kpi-delta { font-size: 12px; margin-top: 3px; }
+  .kpi-delta.up { color: #3b6d11; }
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 1.5rem; }
+  .chart-card { background: #fff; border: 1px solid #e5e5e2; border-radius: 12px; padding: 1.25rem; }
+  .chart-title { font-size: 14px; font-weight: 500; color: #1a1a1a; margin-bottom: 3px; }
+  .chart-sub { font-size: 12px; color: #999; margin-bottom: 12px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+  .legend span { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #666; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .insight-box { background: #fff; border-left: 3px solid #378add; border-radius: 0 10px 10px 0; padding: 0.85rem 1.1rem; font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 1.25rem; }
+  .insight-label { font-size: 11px; font-weight: 500; color: #378add; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  footer { text-align: center; font-size: 12px; color: #aaa; padding: 2rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Student Outcomes Dashboard</h1>
+    <p>Enrollment · Persistence · Demographics · Engagement — 2020–2024</p>
+  </div>
+  <span class="badge">Portfolio project — Sanay Kumar</span>
+</header>
+
+<main>
+
+  <div class="filter-row">
+    <label>Academic year:</label>
+    <select id="yearFilter" onchange="updateDash()">
+      <option value="all">All years (2021–2024)</option>
+      <option value="2024">2023–24</option>
+      <option value="2023">2022–23</option>
+      <option value="2022">2021–22</option>
+    </select>
+    <label>Program:</label>
+    <select id="progFilter" onchange="updateDash()">
+      <option value="all">All programs</option>
+      <option value="stem">STEM</option>
+      <option value="business">Business</option>
+      <option value="arts">Arts & Humanities</option>
+    </select>
+  </div>
+
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <p class="chart-title">Persistence rate by cohort year</p>
+      <p class="chart-sub">% of students returning each semester</p>
+      <div class="legend" id="leg1"></div>
+      <div style="position:relative;width:100%;height:210px;"><canvas id="c1" role="img" aria-label="Line chart of persistence rates by cohort year">Persistence rates range from 68% to 100% across semesters.</canvas></div>
+    </div>
+    <div class="chart-card">
+      <p class="chart-title">Student demographics</p>
+      <p class="chart-sub">Enrollment composition, 2023–24</p>
+      <div class="legend" id="leg2"></div>
+      <div style="position:relative;width:100%;height:210px;"><canvas id="c2" role="img" aria-label="Donut chart of student demographics">Hispanic/Latino 34%, White 28%, Black/African American 18%, Asian 12%, Other 8%.</canvas></div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <p class="chart-title">Enrollment by program area</p>
+      <p class="chart-sub">Headcount per academic year</p>
+      <div class="legend" id="leg3"></div>
+      <div style="position:relative;width:100%;height:210px;"><canvas id="c3" role="img" aria-label="Grouped bar chart of enrollment by program area">STEM and Business trend upward; Arts & Humanities is stable.</canvas></div>
+    </div>
+    <div class="chart-card">
+      <p class="chart-title">Engagement score distribution</p>
+      <p class="chart-sub">Pre vs post program participation</p>
+      <div class="legend" id="leg4"></div>
+      <div style="position:relative;width:100%;height:210px;"><canvas id="c4" role="img" aria-label="Bar chart comparing pre and post engagement scores">Post scores shift significantly toward higher bands.</canvas></div>
+    </div>
+  </div>
+
+  <div class="insight-box">
+    <p class="insight-label">Key insight</p>
+    <p id="insightText"></p>
+  </div>
+
+</main>
+
+<footer>Built by Sanay Kumar · Graduate Assistant Portfolio · Data sourced from institutional records (simulated)</footer>
+
+<script>
+const kpiData = {
+  all:  { enrolled: 4820, persistence: '84%', engagementGain: '+22 pts', firstGen: '61%', dEnrolled: '+8% vs prior year', dPersistence: '+3pp vs prior year', dEng: '+5pts vs prior year', dFirstGen: '+4pp vs prior year' },
+  2024: { enrolled: 1340, persistence: '87%', engagementGain: '+26 pts', firstGen: '63%', dEnrolled: '+5% vs prior year', dPersistence: '+2pp vs prior year', dEng: '+6pts vs prior year', dFirstGen: '+2pp vs prior year' },
+  2023: { enrolled: 1260, persistence: '85%', engagementGain: '+21 pts', firstGen: '60%', dEnrolled: '+6% vs prior year', dPersistence: '+3pp vs prior year', dEng: '+4pts vs prior year', dFirstGen: '+3pp vs prior year' },
+  2022: { enrolled: 1180, persistence: '81%', engagementGain: '+18 pts', firstGen: '58%', dEnrolled: '+3% vs prior year', dPersistence: '+1pp vs prior year', dEng: '+3pts vs prior year', dFirstGen: '+1pp vs prior year' },
+};
+const insights = {
+  all:  'Across all four cohorts, persistence rates improved by 3 percentage points and first-generation student enrollment reached 61% — above the national benchmark of 56%.',
+  2024: 'In 2023–24, post-program engagement scores jumped 26 points on average, the strongest gain in four years. STEM enrollment hit a record high of 640 students.',
+  2023: 'The 2022–23 cohort showed steady gains across all metrics, with first-gen enrollment growing to 60% as outreach efforts expanded across program areas.',
+  2022: 'The 2021–22 cohort establishes the baseline. Persistence at 81% and engagement gains of 18 points set the foundation for multi-year improvement.',
+};
+
+function updateDash() {
+  const yr = document.getElementById('yearFilter').value;
+  const d = kpiData[yr];
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi"><p class="kpi-label">Total enrolled</p><p class="kpi-value">${d.enrolled.toLocaleString()}</p><p class="kpi-delta up">↑ ${d.dEnrolled}</p></div>
+    <div class="kpi"><p class="kpi-label">Persistence rate</p><p class="kpi-value">${d.persistence}</p><p class="kpi-delta up">↑ ${d.dPersistence}</p></div>
+    <div class="kpi"><p class="kpi-label">Engagement gain</p><p class="kpi-value">${d.engagementGain}</p><p class="kpi-delta up">↑ ${d.dEng}</p></div>
+    <div class="kpi"><p class="kpi-label">First-gen students</p><p class="kpi-value">${d.firstGen}</p><p class="kpi-delta up">↑ ${d.dFirstGen}</p></div>
+  `;
+  document.getElementById('insightText').textContent = insights[yr];
+}
+updateDash();
+
+function makeLegend(id, items) {
+  document.getElementById(id).innerHTML = items.map(i =>
+    `<span><span class="leg-dot" style="background:${i.color}"></span>${i.label}</span>`
+  ).join('');
+}
+
+makeLegend('leg1', [
+  {color:'#378ADD',label:'2020–21'},{color:'#3B6D11',label:'2021–22'},
+  {color:'#BA7517',label:'2022–23'},{color:'#993556',label:'2023–24'}
+]);
+new Chart(document.getElementById('c1'), {
+  type:'line',
+  data:{
+    labels:['Fall','Spring','Summer','Fall+1','Spring+1'],
+    datasets:[
+      {label:'2020–21',data:[100,82,74,70,68],borderColor:'#378ADD',backgroundColor:'transparent',tension:0.3,pointRadius:3},
+      {label:'2021–22',data:[100,83,76,72,70],borderColor:'#3B6D11',backgroundColor:'transparent',tension:0.3,pointRadius:3},
+      {label:'2022–23',data:[100,85,79,75,73],borderColor:'#BA7517',backgroundColor:'transparent',tension:0.3,pointRadius:3},
+      {label:'2023–24',data:[100,88,82,78,76],borderColor:'#993556',backgroundColor:'transparent',tension:0.3,pointRadius:3},
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:60,max:105,ticks:{callback:v=>v+'%',font:{size:11}}},x:{ticks:{font:{size:11}}}}}
+});
+
+makeLegend('leg2', [
+  {color:'#378ADD',label:'Hispanic/Latino 34%'},{color:'#3B6D11',label:'White 28%'},
+  {color:'#BA7517',label:'Black/African Am. 18%'},{color:'#534AB7',label:'Asian 12%'},{color:'#888780',label:'Other 8%'}
+]);
+new Chart(document.getElementById('c2'), {
+  type:'doughnut',
+  data:{labels:['Hispanic/Latino','White','Black/African Am.','Asian','Other'],
+    datasets:[{data:[34,28,18,12,8],backgroundColor:['#378ADD','#3B6D11','#BA7517','#534AB7','#888780'],borderWidth:2,borderColor:'#fff'}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'62%'}
+});
+
+makeLegend('leg3', [
+  {color:'#378ADD',label:'STEM'},{color:'#BA7517',label:'Business'},{color:'#534AB7',label:'Arts & Humanities'}
+]);
+new Chart(document.getElementById('c3'), {
+  type:'bar',
+  data:{
+    labels:['2020–21','2021–22','2022–23','2023–24'],
+    datasets:[
+      {label:'STEM',data:[480,530,590,640],backgroundColor:'#378ADD'},
+      {label:'Business',data:[410,430,450,480],backgroundColor:'#BA7517'},
+      {label:'Arts & Humanities',data:[310,320,315,320],backgroundColor:'#534AB7'},
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:11}}}}}
+});
+
+makeLegend('leg4', [
+  {color:'#5DCAA5',label:'Pre-program'},{color:'#185FA5',label:'Post-program'}
+]);
+new Chart(document.getElementById('c4'), {
+  type:'bar',
+  data:{
+    labels:['Low (1–2)','Below avg (3–4)','Average (5–6)','Above avg (7–8)','High (9–10)'],
+    datasets:[
+      {label:'Pre-program',data:[22,28,25,16,9],backgroundColor:'#5DCAA5'},
+      {label:'Post-program',data:[5,10,20,33,32],backgroundColor:'#185FA5'},
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10},autoSkip:false,maxRotation:20}},y:{ticks:{callback:v=>v+'%',font:{size:11}}}}}
+});
+</script>
+</body>
+</html>
+```
+
+On GitHub, click **Add file → Create new file**, name it `index.html`, paste this in, then commit. Let me know when it's live!
